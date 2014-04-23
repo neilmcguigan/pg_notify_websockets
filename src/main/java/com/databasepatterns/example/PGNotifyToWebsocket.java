@@ -11,9 +11,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * @author: neilmcguigan@gmail.com
- * @since: 4/11/14
- *
  * I take PostgreSQL NOTIFY messages and send them to Spring WebSocket.
  */
 public class PGNotifyToWebsocket {
