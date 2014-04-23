@@ -1,0 +1,50 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:websocket="http://www.springframework.org/schema/websocket"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket.xsd
+        ">
+
+    <context:component-scan base-package="com.databasepatterns.example"/>
+
+    <!-- I read O/S environment variables and properties files as ${placeholders} -->
+    <context:property-placeholder location="WEB-INF/app.properties"/>
+
+    <!-- I am the datasource passed to the PostgreSQL listener -->
+    <bean class="com.impossibl.postgres.jdbc.PGDataSource" id="dataSource">
+        <property name="host" value="${db.host}"/>
+        <property name="port" value="${db.port}"/>
+        <property name="database" value="${db.database}"/>
+        <property name="user" value="${db.user}"/>
+        <property name="password" value="${PGPASSWORD}"/>
+    </bean>
+
+    <!-- I listen to PostgreSQL NOTIFY messages and send them to the message broker -->
+    <bean class="com.databasepatterns.example.PGNotifyToWebsocket" id="pgNotifyToWebsocket" init-method="init"
+          destroy-method="destroy">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="channels" value="${websocket.channels}"/>
+    </bean>
+
+    <!-- I listen for websocket subscriptions from clients and broadcast messages to them -->
+    <websocket:message-broker application-destination-prefix="${websocket.applicationDestinationPrefix}">
+        <websocket:stomp-endpoint path="${websocket.stompEndpointPath}">
+            <websocket:sockjs/>
+        </websocket:stomp-endpoint>
+        <websocket:simple-broker prefix="${websocket.simpleBrokerPrefix}"/>
+    </websocket:message-broker>
+
+    <!-- I map the `/` path to the `index` view -->
+    <mvc:view-controller path="/" view-name="index"/>
+
+    <!-- I map view names to `/WEB-INF/pages/*.jsp` -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/pages/"/>
+        <property name="suffix" value=".jsp"/>
+    </bean>
+
+</beans>
