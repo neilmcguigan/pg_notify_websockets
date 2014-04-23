@@ -1,0 +1,1 @@
+A simple PostgreSQL NOTIFY to WebSocket example.
