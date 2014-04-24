@@ -2,24 +2,17 @@ package com.databasepatterns.example;
 
 import com.impossibl.postgres.api.jdbc.PGConnection;
 import com.impossibl.postgres.api.jdbc.PGNotificationListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 /**
- * I take PostgreSQL NOTIFY messages and send them to Spring WebSocket.
+ * I LISTEN and UNLISTEN to PostgreSQL channels, and register a Listener.
  */
 public class PGNotifyToWebsocket {
 
-    @Value("${websocket.simpleBrokerPrefix}")
-    private String simpleBrokerPrefix;
-
-    @Autowired
-    SimpMessagingTemplate template; //the object that sends websocket messages
+    private PGNotificationListener pgNotificationListener;
     private DataSource dataSource;
     private String[] channels;
     private PGConnection pgConnection;
@@ -28,12 +21,7 @@ public class PGNotifyToWebsocket {
 
         pgConnection = (PGConnection) dataSource.getConnection();
 
-        pgConnection.addNotificationListener(new PGNotificationListener() {
-            @Override
-            public void notification(int processId, String channelName, String payload) {
-                template.convertAndSend(simpleBrokerPrefix + "/" + channelName, payload);
-            }
-        });
+        pgConnection.addNotificationListener(pgNotificationListener);
 
         Statement statement = pgConnection.createStatement();
         for (String channel : channels) {
@@ -61,4 +49,7 @@ public class PGNotifyToWebsocket {
         this.channels = channels;
     }
 
+    public void setPgNotificationListener(PGNotificationListener pgNotificationListener) {
+        this.pgNotificationListener = pgNotificationListener;
+    }
 }

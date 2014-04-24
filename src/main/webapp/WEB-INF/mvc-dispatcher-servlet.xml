@@ -16,35 +16,35 @@
 
     <!-- I am the datasource passed to the PostgreSQL listener -->
     <bean class="com.impossibl.postgres.jdbc.PGDataSource" id="dataSource">
-        <property name="host" value="${db.host}"/>
-        <property name="port" value="${db.port}"/>
-        <property name="database" value="${db.database}"/>
-        <property name="user" value="${db.user}"/>
+        <property name="host" value="${PGHOST:localhost}"/>
+        <property name="port" value="${PGPORT:5432}"/>
+        <property name="database" value="${PGDATABASE:postgres}"/>
+        <property name="user" value="${PGUSER:postgres}"/>
         <property name="password" value="${PGPASSWORD}"/>
     </bean>
 
-    <!-- I listen to PostgreSQL NOTIFY messages and send them to the message broker -->
+    <!-- I am the PGNotificationListener that sends WebSocket messages -->
+    <bean class="com.databasepatterns.example.MyNotificationListener" id="myNotificationListener">
+        <property name="simpleBrokerPrefix" value="${websocket.simpleBrokerPrefix}"/>
+    </bean>
+
+    <!-- I LISTEN and UNLISTEN to Postgres channels and register the PGNotificationListener -->
     <bean class="com.databasepatterns.example.PGNotifyToWebsocket" id="pgNotifyToWebsocket" init-method="init"
           destroy-method="destroy">
+        <property name="pgNotificationListener" ref="myNotificationListener" />
         <property name="dataSource" ref="dataSource"/>
         <property name="channels" value="${websocket.channels}"/>
     </bean>
 
     <!-- I listen for websocket subscriptions from clients and broadcast messages to them -->
-    <websocket:message-broker application-destination-prefix="${websocket.applicationDestinationPrefix}">
+    <websocket:message-broker application-destination-prefix="/app">
         <websocket:stomp-endpoint path="${websocket.stompEndpointPath}">
             <websocket:sockjs/>
         </websocket:stomp-endpoint>
         <websocket:simple-broker prefix="${websocket.simpleBrokerPrefix}"/>
     </websocket:message-broker>
 
-    <!-- I map the `/` path to the `index` view -->
-    <mvc:view-controller path="/" view-name="index"/>
-
-    <!-- I map view names to `/WEB-INF/pages/*.jsp` -->
-    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
-        <property name="prefix" value="/WEB-INF/pages/"/>
-        <property name="suffix" value=".jsp"/>
-    </bean>
+    <!-- I allow webapp/static/index.html to be served -->
+    <mvc:resources mapping="/static/**" location="/static/"/>
 
 </beans>
