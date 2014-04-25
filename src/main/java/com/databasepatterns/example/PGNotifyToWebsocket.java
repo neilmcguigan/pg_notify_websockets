@@ -17,6 +17,12 @@ public class PGNotifyToWebsocket {
     private String[] channels;
     private PGConnection pgConnection;
 
+    public PGNotifyToWebsocket(String[] channels, DataSource dataSource, PGNotificationListener pgNotificationListener) {
+        this.channels = channels;
+        this.dataSource = dataSource;
+        this.pgNotificationListener = pgNotificationListener;
+    }
+
     public void init() throws SQLException {
 
         pgConnection = (PGConnection) dataSource.getConnection();
@@ -25,7 +31,7 @@ public class PGNotifyToWebsocket {
 
         Statement statement = pgConnection.createStatement();
         for (String channel : channels) {
-            statement.addBatch("LISTEN " + channel);
+            statement.addBatch("LISTEN " + SqlFilter.identifier(channel) );
         }
         statement.executeBatch();
         statement.close();
@@ -34,22 +40,8 @@ public class PGNotifyToWebsocket {
     public void destroy() throws SQLException {
 
         Statement statement = pgConnection.createStatement();
-        for (String channel : channels) {
-            statement.addBatch("UNLISTEN " + channel);
-        }
-        statement.executeBatch();
+        statement.execute("UNLISTEN *");
         statement.close();
     }
 
-    public void setDataSource(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public void setChannels(String[] channels) {
-        this.channels = channels;
-    }
-
-    public void setPgNotificationListener(PGNotificationListener pgNotificationListener) {
-        this.pgNotificationListener = pgNotificationListener;
-    }
 }

@@ -10,12 +10,13 @@ public class MyNotificationListener implements PGNotificationListener {
     SimpMessagingTemplate template; //the object that sends websocket messages
     private String simpleBrokerPrefix;
 
+    public MyNotificationListener(String simpleBrokerPrefix) {
+        this.simpleBrokerPrefix = simpleBrokerPrefix;
+    }
+
     @Override
     public void notification(int processId, String channelName, String payload) {
         template.convertAndSend(simpleBrokerPrefix + "/" + channelName, payload);
     }
 
-    public void setSimpleBrokerPrefix(String simpleBrokerPrefix) {
-        this.simpleBrokerPrefix = simpleBrokerPrefix;
-    }
 }

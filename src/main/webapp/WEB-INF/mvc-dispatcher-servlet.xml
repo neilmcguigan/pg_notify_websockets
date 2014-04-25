@@ -9,9 +9,10 @@
         http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket.xsd
         ">
 
+    <!-- I scan classes in the given package for annotations -->
     <context:component-scan base-package="com.databasepatterns.example"/>
 
-    <!-- I read O/S environment variables and properties files as ${placeholders} -->
+    <!-- I read O/S environment variables and variables in java .properties files as ${placeholders} -->
     <context:property-placeholder location="WEB-INF/app.properties"/>
 
     <!-- I am the datasource passed to the PostgreSQL listener -->
@@ -25,15 +26,15 @@
 
     <!-- I am the PGNotificationListener that sends WebSocket messages -->
     <bean class="com.databasepatterns.example.MyNotificationListener" id="myNotificationListener">
-        <property name="simpleBrokerPrefix" value="${websocket.simpleBrokerPrefix}"/>
+        <constructor-arg value="${websocket.simpleBrokerPrefix}" />
     </bean>
 
     <!-- I LISTEN and UNLISTEN to Postgres channels and register the PGNotificationListener -->
     <bean class="com.databasepatterns.example.PGNotifyToWebsocket" id="pgNotifyToWebsocket" init-method="init"
           destroy-method="destroy">
-        <property name="pgNotificationListener" ref="myNotificationListener" />
-        <property name="dataSource" ref="dataSource"/>
-        <property name="channels" value="${websocket.channels}"/>
+        <constructor-arg value="${websocket.channels}"/>
+        <constructor-arg ref="dataSource"/>
+        <constructor-arg ref="myNotificationListener"/>
     </bean>
 
     <!-- I listen for websocket subscriptions from clients and broadcast messages to them -->
